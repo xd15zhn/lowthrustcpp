@@ -21,28 +21,28 @@ void Draw_Trajectory(list<Vector3>& point) {
 
 int main(void) {
     list<Vector3> earthOrbit, marsOrbit;
-    Orbital_Elements earthElements(MU_EARTH, Mat(6, 1, vecdble{
-        149.6, 0.01667835, 0, 49.558*DEG2RAD, 103.30275*DEG2RAD, 1.57}));
-    Orbital_Elements marsElements(MU_MARS, Mat(6, 1, vecdble{
-        227.9, 0.09341233, 1.850*DEG2RAD, 49.558*DEG2RAD, 286.5*DEG2RAD, 0}));
+    Orbital_Elements earthElements(SUN_MU, Mat(6, 1, vecdble{
+        EARTH_a, EARTH_e, EARTH_i, EARTH_n, EARTH_w, EARTH_f}));
+    Orbital_Elements marsElements(SUN_MU, Mat(6, 1, vecdble{
+        MARS_a, MARS_e, MARS_i, MARS_n, MARS_w, MARS_f}));
     double t;
     Mat point;
     cout << "Calculating trajectory......" << endl;
-    for (t = 0; t < 3154000; t+=1000) {
+    for (t = 0; t < 1577; t+=1) {  // 365*86400/1e4/2
         earthElements.Update_TrueAnomaly(t);
         point = earthElements.Update_Position();
         earthOrbit.push_back((Vector3){  // 存储轨迹点
-            float(point.at(0,0)), 
-            float(point.at(1,0)), 
+            float(point.at(0,0)),
+            float(point.at(1,0)),
             float(point.at(2,0)),
         });
     }
-    for (t = 0; t < 5935000*2; t+=1000) {
+    for (t = 0; t < 2968; t+=1) {  // 687*86400/1e4/2
         marsElements.Update_TrueAnomaly(t);
         point = marsElements.Update_Position();
         marsOrbit.push_back((Vector3){  // 存储轨迹点
-            float(point.at(0,0)), 
-            float(point.at(1,0)), 
+            float(point.at(0,0)),
+            float(point.at(1,0)),
             float(point.at(2,0)),
         });
     }

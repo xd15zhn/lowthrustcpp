@@ -21,7 +21,7 @@ struct Orbital_Elements {
     double _kv;  // 用于求速度向量的常数系数
     double _omega;  // 轨道平均角速度
     double _ta;  // 真近点角(true anomaly)
-    double _a, _e, _i, _n, _w, _f;  // 轨道六要素._f为初始真近点角
+    double _a, _e, _m;  // 半长轴，偏心率，初始平近点角
     Mat _RT;  // i,n,w确定的坐标变换矩阵
     Mat _position;  // 位置向量
     Mat _velocity;  // 速度向量
