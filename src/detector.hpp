@@ -23,19 +23,14 @@ public:
     Simulator _sim1;
     UInput *_inTheta=nullptr;  // 发动机方位角
     UInput *_inPhi=nullptr;  // 发动机俯仰角
-    UConstant* _cnstF=nullptr;  // 发动机推力大小
-    UIntegrator *_intRx=nullptr;  // 探测器位置向量
-    UIntegrator *_intRy=nullptr;  // 探测器位置向量
-    UIntegrator *_intRz=nullptr;  // 探测器位置向量
-    UIntegrator *_intVx=nullptr;  // 探测器速度向量
-    UIntegrator *_intVy=nullptr;  // 探测器速度向量
-    UIntegrator *_intVz=nullptr;  // 探测器速度向量
-    UFcnMISO *_misoAx=nullptr;
-    UFcnMISO *_misoAy=nullptr;
-    UFcnMISO *_misoAz=nullptr;
-    UFcnMISO *_misoMu=nullptr;
-    UIntegrator *_intM=nullptr;
-    UGain *_gainKm=nullptr;
+    UConstant *_cnstF=nullptr;  // 发动机推力大小
+    MStateSpace *_mssr=nullptr;  // 探测器位置向量
+    MStateSpace *_mssv=nullptr;  // 探测器速度向量
+    MFcnMISO *_misoFmu=nullptr;  // 加速度中的重力项
+    MFcnMISO *_misoFa=nullptr;  // 探测器加速度
+    Mux *_mux=nullptr;  //
+    UIntegrator *_intM=nullptr;  // 探测器总质量
+    UGain *_gainKm=nullptr;  //
 };
 
 #endif // ORBITALSIM_H
