@@ -2,51 +2,76 @@
 火星探测器被控对象源文件
 **********************/
 #include "detector.hpp"
+#include <cmath>
 
-MarsDetector::MarsDetector(Simulator *sim, std::string name) {
-    _name = name;
-    simfLD = new MFcnMISO(sim, BusSize(3, 1), "simfL");  // 多入单出函数fLD,输出气动力向量f_{LD}
-    simfA = new MFcnMISO(sim, BusSize(3, 1), "simfA");  // 多入单出函数fA,输出加速度向量
-    simIntr = new MStateSpace(sim, BusSize(3, 1), true, "simIntr");  // 积分器输出位置向量r
-    simIntv = new MStateSpace(sim, BusSize(3, 1), true, "simIntv");  // 积分器输出速度向量v
-    simgain = new MGain(sim, Mat(vecdble{1}), true, "simgain");  // 子模块的输入端口
 
-    sim->connectM(simfA, simIntv);  // 连接函数fA与速度向量
-    sim->connectM(simIntv, simIntr);  // 连接速度向量与位置向量
-    sim->connectM(simIntr, simfLD);  // 函数fL的输入参数r
-    sim->connectM(simIntv, simfLD);  // 函数fL的输入参数v
-    sim->connectM(simgain, simfLD);  // 函数fL的输入参数sigma
-    simfLD->Set_Function([](Mat *u){  // 函数fL
-        Vector3d r = u[0];
-        Vector3d v = u[1];
-        double sigma = u[2].at(0, 0);
-        double h = r.norm2() - R_MARS;  // 距火星表面高度
-        double rho = rho0 * exp(-h/hs);  // 当前高度下的大气密度
-        double Vnorm = v.norm2();  // 速度大小
-        double fnorm = rho*Vnorm*Vnorm*Sref*CD;  // 阻力大小
-        Vector3d D = -fnorm/Vnorm*v;  // 阻力向量
-        fnorm *= LD;  // 升力大小
-        Vector3d n1 = r.Normalvector();  // 组成升力的正交单位向量
-        Vector3d n2 = (r & v).Normalvector();  // 组成升力的正交单位向量
-        Vector3d L = n1*fnorm*cos(sigma) + n2*fnorm*sin(sigma);  // 升力向量
-        return Mat(L+D);  // 气动力向量
+/**********************
+仿真器
+**********************/
+Orbital_Solver::Orbital_Solver() {
+    _inTheta = new UInput(&_sim1, "_inTheta");
+    _inPhi = new UInput(&_sim1, "_inPhi");
+    _cnstF = new UConstant(&_sim1, "_cnstF");
+    _intRx = new UIntegrator(&_sim1, "_intRx");
+    _intRy = new UIntegrator(&_sim1, "_intRy");
+    _intRz = new UIntegrator(&_sim1, "_intRz");
+    _intVx = new UIntegrator(&_sim1, "_intVx");
+    _intVy = new UIntegrator(&_sim1, "_intVy");
+    _intVz = new UIntegrator(&_sim1, "_intVz");
+    _misoAx = new UFcnMISO(&_sim1, "_misoAx");
+    _misoAy = new UFcnMISO(&_sim1, "_misoAy");
+    _misoAz = new UFcnMISO(&_sim1, "_misoAz");
+    _misoMu = new UFcnMISO(&_sim1, "_misoMu");
+    _intM = new UIntegrator(&_sim1, "_intM");
+    _gainKm = new UGain(&_sim1, "_gainKm");
+    _sim1.connectU(_misoAx, _intVx);
+    _sim1.connectU(_misoAy, _intVy);
+    _sim1.connectU(_misoAz, _intVz);
+    _sim1.connectU(_intVx, _intRx);
+    _sim1.connectU(_intVy, _intRy);
+    _sim1.connectU(_intVz, _intRz);
+    _sim1.connectU(_intRx, _misoMu);
+    _sim1.connectU(_intRy, _misoMu);
+    _sim1.connectU(_intRz, _misoMu);
+    _sim1.connectU(_misoMu, _misoAx);
+    _sim1.connectU(_misoMu, _misoAy);
+    _sim1.connectU(_misoMu, _misoAz);
+    _sim1.connectU(_intRx, _misoAx);
+    _sim1.connectU(_intRy, _misoAy);
+    _sim1.connectU(_intRz, _misoAz);
+    _sim1.connectU(_inTheta, _misoAx);
+    _sim1.connectU(_inTheta, _misoAy);
+    _sim1.connectU(_inTheta, _misoAz);
+    _sim1.connectU(_inPhi, _misoAx);
+    _sim1.connectU(_inPhi, _misoAy);
+    _sim1.connectU(_inPhi, _misoAz);
+    _sim1.connectU(_cnstF, _misoAx);
+    _sim1.connectU(_cnstF, _misoAy);
+    _sim1.connectU(_cnstF, _misoAz);
+    _sim1.connectU(_intM, _misoAx);
+    _sim1.connectU(_intM, _misoAy);
+    _sim1.connectU(_intM, _misoAz);
+    _misoMu->Set_Function([](double *u){
+        double ans = u[0]*u[0] + u[1]*u[1] + u[2]*u[2];
+        ans = sqrt(ans);
+        return -SUN_MU / (ans*ans*ans);
     });
-    sim->connectM(simIntr, simfA);  // 函数fA的输入参数r
-    sim->connectM(simfLD, simfA);  // 函数fA的输入参数fLD
-    simfA->Set_Function([](Mat *u){  // 函数fA
-        Vector3d r = u[0];
-        Vector3d fLD = u[1];
-        double k = r.norm2();
-        k = -MU_MARS / (k*k*k);
-        return Mat(k*r + fLD);
+    // double kmu   = u[0];
+    // double rx    = u[1];
+    // double theta = u[2];
+    // double phi   = u[3];
+    // double f     = u[4];
+    // double m     = u[5];
+    // return kmu*rx + f*cos(phi)*cos(theta)/m;
+    _misoAx->Set_Function([](double *u){
+        return u[0]*u[1] + u[4]*cos(u[3])*cos(u[2])/u[5];
     });
-};
-
-PMatModule MarsDetector::Get_InputBus(int n) const {
-    if (n==0) return simgain;
-    return nullptr;
-};
-PMatModule MarsDetector::Get_OutputBus(int n) const {
-    if (n==0) return simIntr;
-    return nullptr;
-};
+    _misoAy->Set_Function([](double *u){
+        return u[0]*u[1] + u[4]*cos(u[3])*sin(u[2])/u[5];
+    });
+    _misoAz->Set_Function([](double *u){
+        return u[0]*u[1] + u[4]*sin(u[3])/u[5];
+    });
+    _sim1.Set_EnableStore(false);
+    _sim1.Initialize();
+}

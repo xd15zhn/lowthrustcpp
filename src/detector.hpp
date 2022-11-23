@@ -6,30 +6,36 @@
 
 #include <cmath>
 #include "simucpp.hpp"
+#include "parameters.hpp"
 using namespace simucpp;
 using namespace zhnmat;
 using namespace std;
 
 #define PI 3.14159265358979323846f
 
+
 /**********************
-火星探测器被控对象
+轨道仿真器
 **********************/
-class MarsDetector: public PackModule {
+class Orbital_Solver {
 public:
-    MarsDetector(Simulator *sim, std::string name);
-    ~MarsDetector() {};
-    virtual PMatModule Get_InputBus(int n) const;
-    virtual PMatModule Get_OutputBus(int n) const;
-    // Mat Get_Position();
-    // Mat Get_Velocity();
-    std::string _name;
-    MFcnMISO *simfLD=nullptr;
-    MFcnMISO *simfA=nullptr;
-    MStateSpace* simIntr=nullptr;
-    MStateSpace* simIntv=nullptr;
-    MGain *simgain=nullptr;
+    Orbital_Solver();
+    Simulator _sim1;
+    UInput *_inTheta=nullptr;  // 发动机方位角
+    UInput *_inPhi=nullptr;  // 发动机俯仰角
+    UConstant* _cnstF=nullptr;  // 发动机推力大小
+    UIntegrator *_intRx=nullptr;  // 探测器位置向量
+    UIntegrator *_intRy=nullptr;  // 探测器位置向量
+    UIntegrator *_intRz=nullptr;  // 探测器位置向量
+    UIntegrator *_intVx=nullptr;  // 探测器速度向量
+    UIntegrator *_intVy=nullptr;  // 探测器速度向量
+    UIntegrator *_intVz=nullptr;  // 探测器速度向量
+    UFcnMISO *_misoAx=nullptr;
+    UFcnMISO *_misoAy=nullptr;
+    UFcnMISO *_misoAz=nullptr;
+    UFcnMISO *_misoMu=nullptr;
+    UIntegrator *_intM=nullptr;
+    UGain *_gainKm=nullptr;
 };
-typedef MarsDetector* PMarsDetector;
 
 #endif // ORBITALSIM_H
