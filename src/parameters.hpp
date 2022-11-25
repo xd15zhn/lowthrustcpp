@@ -12,6 +12,7 @@ constexpr double SUN_MU = 132706538114e-6;  // 太阳μ值
 constexpr double USV_F = 1000.0;  // 发动机推力(kN,kg*km/s^2)
 constexpr double USV_Km = -10000.0/196.0/USV_F;  // 燃料消耗速度(kg/s)
 constexpr int FLY_TIME = 22464;  // 总飞行时间
+constexpr double KT = 1;  // 总飞行时间
 /* 地球轨道处开普勒轨道根数 */
 constexpr double EARTH_a = 1.000840*AU;
 constexpr double EARTH_e =  0.016507;

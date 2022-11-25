@@ -31,9 +31,9 @@ public:
     void Set(double a, double b, double c, double d)
         {_a=a; _b=b;_c=c; _d=d;}
     virtual double Function(double t) const {
-        double ans = _a*t + _b;
-        ans = ans*t + _c;
-        ans = ans*t + _d;
+        double ans = KT*_a*t + _b;
+        ans = KT*ans*t + _c;
+        ans = KT*ans*t + _d;
         return ans;
     };
 private:
@@ -81,7 +81,6 @@ int main(void) {
 /**********************
 计算转移轨道
 **********************/
-    cout << "Calculating trajectory......" << endl;
     vecdble solution{
         0.287717, 2.77068, 1.31148, 1.01602, -0.610206, 1.1287,
         0.482372, 2.97458, -0.75428, 2.42673, 0.91558, 0.618227,
@@ -96,39 +95,43 @@ int main(void) {
     solver._mssv->Set_InitialValue(Mat(vecdble{
         -19.3527970698371, -22.1182257893965, -0.000451706663468062}));
     solver._intM->Set_InitialValue(USV_M);
+    cout << "Calculating trajectory......" << endl;
     /*分别设置第一段和第三段的发动机工作时间*/
     int dur1 = 25000/PI * atan(solution[16]*solution[16]);
     int dur2 = FLY_TIME - 15000/PI * atan(solution[17]*solution[17]);
     /*第一段发动机工作，为俯仰角和方位角分别设置三次函数*/
     cubic1->Set(solution[0], solution[4], solution[8], solution[12]);
-    cubic2->Set(1e-6*solution[1], 1e-6*solution[5], 1e-3*solution[9], 1e-3*solution[13]);
+    cubic2->Set(1e-5*solution[1], 1e-5*solution[5], 0.01*solution[9], 0.01*solution[13]);
     solver._inTheta->Set_Function(cubic1);
     solver._inPhi->Set_Function(cubic2);
     solver._cnstF->Set_OutValue(USV_F);
     for (t = 0; t < dur1; t++) {
-        solver._sim1.Simulate_OneStep();
+        // for (int i = 0; i < 100; i++)
+            solver._sim1.Simulate_OneStep();
         point = solver._mssr->Get_OutValue();
         usvOrbit1.push_back(MatToVector3(point));
     }
     /*第二段发动机关闭*/
     solver._cnstF->Set_OutValue(0);
     for (; t < dur2; t++) {
-        solver._sim1.Simulate_OneStep();
+        // for (int i = 0; i < 100; i++)
+            solver._sim1.Simulate_OneStep();
         point = solver._mssr->Get_OutValue();
         usvOrbit2.push_back(MatToVector3(point));
     }
     /*第三段发动机工作，为俯仰角和方位角分别设置新的三次函数*/
     cubic1->Set(solution[2], solution[6], solution[10], solution[14]);
-    cubic2->Set(1e-6*solution[3], 1e-6*solution[7], 1e-3*solution[11], 1e-3*solution[15]);
+    cubic2->Set(1e-5*solution[3], 1e-5*solution[7], 0.01*solution[11], 0.01*solution[15]);
     solver._inTheta->Set_Function(cubic1);
     solver._inPhi->Set_Function(cubic2);
     solver._cnstF->Set_OutValue(USV_F);
     for (; t < FLY_TIME; t++) {
-        solver._sim1.Simulate_OneStep();
+        // for (int i = 0; i < 100; i++)
+            solver._sim1.Simulate_OneStep();
         point = solver._mssr->Get_OutValue();
         usvOrbit3.push_back(MatToVector3(point));
     }
-    cout << "\nMars trajectory calculating finished." << endl;
+    cout << "Mars trajectory calculating finished." << endl;
     cout << "duration1: " << dur1 << endl;
     cout << "duration2: " << dur2 << endl;
     cout << "mass remain: "  << 1000 - (dur1 + FLY_TIME - dur2)*1000.0/19600.0 << endl;
@@ -161,9 +164,9 @@ int main(void) {
                 // Draw_Frame_Oxyz();  // 坐标系测试
                 Draw_Trajectory(earthOrbit, RAYWHITE);  // 画3D轨迹
                 Draw_Trajectory(marsOrbit, RAYWHITE);  // 画3D轨迹
-                Draw_Trajectory(usvOrbit1, GREEN);  // 画3D轨迹
-                Draw_Trajectory(usvOrbit2, WHITE);  // 画3D轨迹
-                Draw_Trajectory(usvOrbit3, GREEN);  // 画3D轨迹
+                Draw_Trajectory(usvOrbit1, RED);  // 画3D轨迹
+                Draw_Trajectory(usvOrbit2, GREEN);  // 画3D轨迹
+                Draw_Trajectory(usvOrbit3, RED);  // 画3D轨迹
             EndMode3D();
             DrawText(TextFormat("%2i FPS", GetFPS()), 0, 0, 20, LIME);
         EndDrawing();
