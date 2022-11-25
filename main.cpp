@@ -30,7 +30,6 @@ int main(void) {
         MARS_a, MARS_e, MARS_i, MARS_n, MARS_w, MARS_f}));
     int t;
     Mat point;
-    cout << "Calculating trajectory......" << endl;
     for (t = 0; t < 1577; t++) {  // 365*86400/1e4/2
         earthElements.Update_TrueAnomaly(t);
         point = earthElements.Update_Position();
@@ -57,18 +56,21 @@ int main(void) {
             endV = earthElements.Update_Velocity();
         }
     }
-    cout << "\nMars trajectory calculating finished." << endl;
-    // cout << startR << endl;
-    // cout << startV << endl;
+    cout << startR << endl;
+    cout << startV << endl;
+    cout << endR << endl;
+    cout << endV << endl;
 
+    cout << "Calculating trajectory......" << endl;
     Orbital_Solver detector;
     detector._mssr->Set_InitialValue(startR);
     detector._mssv->Set_InitialValue(startV);
     detector._cnstF->Set_OutValue(USV_F);
     detector._inTheta->Set_Function([](double u){return -1.57;});
     detector._inPhi->Set_Function([](double u){return 0.0;});
-    for (int i = 0; i < 100; i++) {
-        for (int n = 0; n < 1000; n++)
+    int process, pointsnum=10;
+    for (int i = 0; i < pointsnum; i++) {
+        for (int n = 0; n < 10; n++)
             detector._sim1.Simulate_OneStep();
         point = detector._mssr->Get_OutValue();
         usvOrbit.push_back((Vector3) {
@@ -76,8 +78,11 @@ int main(void) {
             float(point.at(1,0)),
             float(point.at(2,0)),
         });
+        process = int(i*100.0/pointsnum+0.5);
+        cout << process << "\%        \r";
     }
-    // cout << detector._intM->Get_OutValue() << endl;
+    cout << "\nMars trajectory calculating finished." << endl;
+    cout << detector._intM->Get_OutValue() << endl;
 
 #ifndef DEBUG
     Camera camera;
